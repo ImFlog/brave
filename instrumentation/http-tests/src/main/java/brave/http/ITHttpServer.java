@@ -5,6 +5,8 @@ import brave.propagation.ExtraFieldPropagation;
 import brave.sampler.Sampler;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -217,6 +219,41 @@ public abstract class ITHttpServer extends ITHttp {
 
     assertReportedTagsInclude("http.url", url(uri));
     assertReportedTagsInclude("context.visible", "true");
+  }
+
+  @Test
+  public void supportsHttpTemplate() throws Exception {
+    // We don't know if we can read the template from the request or the response, so try both
+    httpTracing = httpTracing.toBuilder().serverParser(new HttpServerParser() {
+      @Override
+      public <Req> void request(HttpAdapter<Req, ?> adapter, Req req, SpanCustomizer customizer) {
+        super.request(adapter, req, customizer);
+        String template = adapter.templateFromRequest(req);
+        if (template != null) customizer.name(template);
+      }
+
+      @Override public <Resp> void response(HttpAdapter<?, Resp> adapter, Resp res, Throwable error,
+          SpanCustomizer customizer) {
+        super.response(adapter, res, error, customizer);
+        String template = adapter.templateFromResponse(res);
+        if (template != null) customizer.name(template);
+      }
+    }).build();
+    init();
+
+    get("/items/1?foo");
+    get("/items/2?bar");
+
+    assertThat(spans).extracting(s -> s.tags().get("http.path"))
+        .containsExactly("/items/1", "/items/2");
+
+    Set<String> templates = spans.stream()
+        .map(Span::name)
+        .collect(Collectors.toSet());
+
+    assertThat(templates).hasSize(1);
+    assertThat(templates.iterator().next())
+        .contains("items");
   }
 
   @Test

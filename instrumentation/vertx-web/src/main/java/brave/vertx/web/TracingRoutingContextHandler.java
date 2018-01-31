@@ -70,6 +70,11 @@ final class TracingRoutingContextHandler implements Handler<RoutingContext> {
           return request.method().name();
         }
 
+        @Override public String templateFromRequest(HttpServerRequest request) {
+          // route is available, but does not have readback for any regex pattern set
+          return null;
+        }
+
         @Override public String url(HttpServerRequest request) {
           return request.absoluteURI();
         }

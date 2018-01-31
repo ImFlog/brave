@@ -42,6 +42,11 @@ public final class ContainerAdapter
     return response.getStatus();
   }
 
+  @Override public String templateFromRequest(ContainerRequestContext request) {
+    // currently, there's no portable means to get the template values
+    return null;
+  }
+
   @Nullable public final <Req> Method resourceMethod(Req request) {
     ResourceInfo resourceInfo = resourceInfo(request);
     return resourceInfo != null ? resourceInfo.getResourceMethod() : null;

@@ -8,7 +8,6 @@ import brave.http.HttpServerHandler;
 import brave.http.HttpTracing;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
-import brave.servlet.HttpServletAdapter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +41,7 @@ public final class TracingHandlerInterceptor implements HandlerInterceptor {
 
   @Autowired TracingHandlerInterceptor(HttpTracing httpTracing) { // internal
     tracer = httpTracing.tracing().tracer();
-    handler = HttpServerHandler.create(httpTracing, new HttpServletAdapter());
+    handler = HttpServerHandler.create(httpTracing, new WebMVCAdapter());
     extractor = httpTracing.tracing().propagation().extractor(GETTER);
   }
 
@@ -59,7 +58,7 @@ public final class TracingHandlerInterceptor implements HandlerInterceptor {
 
   @Override
   public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-      ModelAndView modelAndView) throws Exception {
+      ModelAndView modelAndView) {
   }
 
   @Override
